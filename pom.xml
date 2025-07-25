@@ -40,6 +40,11 @@
 			<artifactId>http-server</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+		<dependency>
+			<groupId>info.unterrainer.commons</groupId>
+			<artifactId>oauth-token-manager</artifactId>
+			<version>1.0.7</version>
+		</dependency>
 	</dependencies>
 	
 	<build>

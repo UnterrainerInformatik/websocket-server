@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import org.jetbrains.annotations.NotNull;
 
+import info.unterrainer.oauthtokenmanager.OauthTokenManager;
 import io.javalin.Javalin;
 import io.javalin.websocket.WsHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,7 @@ public class WebsocketServer {
 
 	private String keycloakHost;
 	private String realm;
-	private JwtTokenHandler tokenHandler;
+	private OauthTokenManager tokenManager;
 
 	private Javalin wss;
 	private boolean isOauthEnabled = false;
@@ -28,8 +29,8 @@ public class WebsocketServer {
 		this.realm = keycloakRealm;
 
 		try {
-			tokenHandler = new JwtTokenHandler(this.keycloakHost, this.realm);
-			tokenHandler.initPublicKey();
+			tokenManager = new OauthTokenManager(this.keycloakHost, this.realm);
+			tokenManager.initPublicKey();
 			wss = Javalin.create();
 			isOauthEnabled = true;
 		} catch (Exception e) {
@@ -54,7 +55,7 @@ public class WebsocketServer {
 			throw new IllegalStateException("Websocket server is not configured for OAuth2/JWT support.");
 		}
 
-		handler.setTokenHandler(tokenHandler);
+		handler.setTokenHandler(tokenManager);
 		wss.ws(path, ws -> {
 			ws.onConnect(handler::onConnect);
 			ws.onMessage(handler::onMessage);

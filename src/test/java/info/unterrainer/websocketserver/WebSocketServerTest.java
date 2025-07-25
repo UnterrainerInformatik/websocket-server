@@ -8,7 +8,7 @@ public class WebSocketServerTest {
 
 		aiComm = new AiComm();
 
-		server.wsOauth("/wss", aiComm);
+		server.wsOauth("/jwt", aiComm);
 		server.ws("/ws", ws -> {
 			ws.onConnect(ctx -> ctx.send("Welcome to our websocket-server!"));
 			ws.onMessage(ctx -> ctx.send("Echo from server: [" + ctx.message() + "]"));
