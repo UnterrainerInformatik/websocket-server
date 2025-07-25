@@ -3,8 +3,6 @@ package info.unterrainer.websocketserver;
 import java.util.HashSet;
 import java.util.function.Consumer;
 
-import org.jetbrains.annotations.NotNull;
-
 import info.unterrainer.oauthtokenmanager.OauthTokenManager;
 import io.javalin.Javalin;
 import io.javalin.websocket.WsHandler;
@@ -45,12 +43,12 @@ public class WebsocketServer {
 		return this;
 	}
 
-	public WebsocketServer ws(@NotNull String path, @NotNull Consumer<WsHandler> ws) {
+	public WebsocketServer ws(String path, Consumer<WsHandler> ws) {
 		wss.ws(path, ws, new HashSet<>());
 		return this;
 	}
 
-	public WebsocketServer wsOauth(@NotNull String path, @NotNull WsOauthHandlerBase handler) {
+	public WebsocketServer wsOauth(String path, WsOauthHandlerBase handler) {
 		if (!isOauthEnabled) {
 			throw new IllegalStateException("Websocket server is not configured for OAuth2/JWT support.");
 		}

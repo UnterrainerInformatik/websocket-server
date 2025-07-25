@@ -31,16 +31,6 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
-		    <groupId>org.keycloak</groupId>
-		    <artifactId>keycloak-admin-client</artifactId>
-		    <version>26.0.4</version>
-		</dependency>
-		<dependency>
-			<groupId>info.unterrainer.commons</groupId>
-			<artifactId>http-server</artifactId>
-			<version>1.0.0</version>
-		</dependency>
-		<dependency>
 			<groupId>info.unterrainer.commons</groupId>
 			<artifactId>oauth-token-manager</artifactId>
 			<version>1.0.7</version>
