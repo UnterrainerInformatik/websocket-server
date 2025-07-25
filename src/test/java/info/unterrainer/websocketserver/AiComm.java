@@ -3,6 +3,7 @@ package info.unterrainer.websocketserver;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsMessageContext;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,11 @@ public class AiComm extends WsOauthHandlerBase {
 		super.onConnect(ctx);
 		connectedWsClients.add(ctx);
 		ctx.send("Welcome to our websocket-server!");
+	}
+
+	@Override
+	public void onClose(WsCloseContext ctx) {
+		connectedWsClients.removeIf(client -> client.session.equals(ctx.session));
 	}
 
 	@Override
