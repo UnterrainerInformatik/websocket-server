@@ -30,6 +30,12 @@ public class WebsocketServer {
 			tokenManager = new OauthTokenManager(this.keycloakHost, this.realm);
 			tokenManager.initPublicKey();
 			wss = Javalin.create();
+			wss.exception(Exception.class, (e, ctx) -> {
+				log.error("Uncaught exception in Websocket-Server: {}", e);
+			});
+			wss.wsException(Exception.class, (e, ctx) -> {
+				log.error("Uncaught websocket-exception in Websocket-Server: {}", e);
+			});
 			isOauthEnabled = true;
 		} catch (Exception e) {
 			// Exceptions will terminate a request later on, but should not terminate the
