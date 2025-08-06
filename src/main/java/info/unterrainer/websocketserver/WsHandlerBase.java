@@ -1,5 +1,6 @@
 package info.unterrainer.websocketserver;
 
+import io.javalin.websocket.WsBinaryMessageContext;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsErrorContext;
@@ -10,6 +11,8 @@ public abstract class WsHandlerBase {
 	public abstract void onConnect(WsConnectContext ctx) throws Exception;
 
 	public abstract void onMessage(WsMessageContext ctx) throws Exception;
+
+	public abstract void onBinaryMessage(WsBinaryMessageContext ctx) throws Exception;
 
 	public abstract void onClose(WsCloseContext ctx) throws Exception;
 

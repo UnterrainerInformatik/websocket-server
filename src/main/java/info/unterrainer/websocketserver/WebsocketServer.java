@@ -57,6 +57,7 @@ public class WebsocketServer {
 		wss.ws(path, ws -> {
 			ws.onConnect(handler::onConnect);
 			ws.onMessage(handler::onMessage);
+			ws.onBinaryMessage(handler::onBinaryMessage);
 			ws.onClose(handler::onClose);
 			ws.onError(handler::onError);
 		});

@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.jetty.websocket.api.Session;
 
 import info.unterrainer.oauthtokenmanager.OauthTokenManager;
+import io.javalin.websocket.WsBinaryMessageContext;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsErrorContext;
@@ -95,6 +96,17 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 				log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
 				return;
 			}
+		}
+	}
+
+	@Override
+	public void onBinaryMessage(WsBinaryMessageContext ctx) throws Exception {
+		log.debug("Received binary message from [{}]: [{}] bytes", ctx.session.getRemoteAddress(), ctx.data().length);
+		if (isQuarantined(ctx.session)) {
+			log.warn("Invalid Message from quarantined client [{}]. Disconnecting.", ctx.session.getRemoteAddress());
+			removeClient(ctx.session);
+			ctx.session.close();
+			return;
 		}
 	}
 
