@@ -18,9 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WsOauthHandlerBase extends WsHandlerBase {
 
-	private OauthTokenManager tokenHandler;
-	private Set<WsConnectContext> clientsConnected = ConcurrentHashMap.newKeySet();
-	private Set<WsConnectContext> clientsQuarantined = ConcurrentHashMap.newKeySet();
+	protected OauthTokenManager tokenHandler;
+	protected Set<WsConnectContext> clientsConnected = ConcurrentHashMap.newKeySet();
+	protected Set<WsConnectContext> clientsQuarantined = ConcurrentHashMap.newKeySet();
 
 	void setTokenHandler(OauthTokenManager tokenHandler) {
 		this.tokenHandler = tokenHandler;
@@ -89,6 +89,8 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 			try {
 				tokenHandler.checkAccess(ctx.message());
 				WsConnectContext client = getQuarantinedClient(ctx.session);
+				log.debug("Client [{}] passed token validation. Moving from quarantine to connected.",
+						ctx.session.getRemoteAddress());
 				clientsQuarantined.removeIf(c -> c.session.equals(ctx.session));
 				clientsConnected.add(client);
 			} catch (Exception e) {
