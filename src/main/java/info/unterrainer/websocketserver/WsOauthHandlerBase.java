@@ -68,7 +68,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 			clientsConnected.add(ctx);
 		} catch (Exception e) {
 			log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
-			ctx.session.close();
+			ctx.session.close(1000, "Unauthorized access with invalid token");
 			return;
 		}
 	}
@@ -83,7 +83,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 				log.warn("Invalid message from quarantined client [{}]. Disconnecting.",
 						ctx.session.getRemoteAddress());
 				removeClient(ctx.session);
-				ctx.session.close();
+				ctx.session.close(1000, "Unauthorized access from quarantined client");
 				return;
 			}
 			try {
@@ -94,8 +94,8 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 				clientsQuarantined.removeIf(c -> c.session.equals(ctx.session));
 				clientsConnected.add(client);
 			} catch (Exception e) {
-				ctx.session.close();
 				log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
+				ctx.session.close(1000, "Unauthorized access with invalid token");
 				return;
 			}
 		}
@@ -107,7 +107,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 		if (isQuarantined(ctx.session)) {
 			log.warn("Invalid Message from quarantined client [{}]. Disconnecting.", ctx.session.getRemoteAddress());
 			removeClient(ctx.session);
-			ctx.session.close();
+			ctx.session.close(1000, "Unauthorized access from quarantined client");
 			return;
 		}
 	}

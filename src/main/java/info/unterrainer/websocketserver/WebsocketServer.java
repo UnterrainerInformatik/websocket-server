@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import info.unterrainer.oauthtokenmanager.OauthTokenManager;
 import io.javalin.Javalin;
+import io.javalin.websocket.WsExceptionHandler;
 import io.javalin.websocket.WsHandler;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,27 +20,47 @@ public class WebsocketServer {
 	private boolean isOauthEnabled = false;
 
 	public WebsocketServer() {
-		wss = Javalin.create();
+		this(null);
+	}
+
+	public WebsocketServer(WsExceptionHandler<Exception> exceptionHandler) {
+		try {
+			wss = Javalin.create();
+			wss.exception(Exception.class, (e, ctx) -> {
+				log.error("Uncaught exception in Websocket-Server: {}", e);
+			});
+			if (exceptionHandler != null)
+				wss.wsException(Exception.class, exceptionHandler);
+			wss.wsException(Exception.class, (e, ctx) -> {
+				log.error("Uncaught websocket-exception in Websocket-Server: {}", e);
+			});
+		} catch (Exception e) {
+			log.error("Error initializing Websocket-Server.", e);
+		}
 	}
 
 	public WebsocketServer(String keycloakHost, String keycloakRealm) {
+		this(keycloakHost, keycloakRealm, null);
+	}
+
+	public WebsocketServer(String keycloakHost, String keycloakRealm, WsExceptionHandler<Exception> exceptionHandler) {
+		this(exceptionHandler);
+		if (keycloakHost == null || keycloakHost.isEmpty()) {
+			throw new IllegalArgumentException("Keycloak host must not be null or empty.");
+		}
+		if (keycloakRealm == null || keycloakRealm.isEmpty()) {
+			throw new IllegalArgumentException("Keycloak realm must not be null or empty.");
+		}
 		this.keycloakHost = keycloakHost;
 		this.realm = keycloakRealm;
 
 		try {
 			tokenManager = new OauthTokenManager(this.keycloakHost, this.realm);
 			tokenManager.initPublicKey();
-			wss = Javalin.create();
-			wss.exception(Exception.class, (e, ctx) -> {
-				log.error("Uncaught exception in Websocket-Server: {}", e);
-			});
-			wss.wsException(Exception.class, (e, ctx) -> {
-				log.error("Uncaught websocket-exception in Websocket-Server: {}", e);
-			});
 			isOauthEnabled = true;
 		} catch (Exception e) {
-			// Exceptions will terminate a request later on, but should not terminate the
-			// main-thread here.
+			log.error("Error initializing OauthTokenManager.", e);
+			return;
 		}
 	}
 
