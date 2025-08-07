@@ -65,7 +65,7 @@ public class WebsocketServer {
 	}
 
 	public WebsocketServer start(int port) {
-		wss.start(port);
+		wss.start("0.0.0.0", port);
 		log.debug("Websocket server started on port: {}", port);
 		return this;
 	}
