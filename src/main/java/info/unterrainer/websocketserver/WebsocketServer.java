@@ -20,17 +20,26 @@ public class WebsocketServer {
 	private boolean isOauthEnabled = false;
 
 	public WebsocketServer() {
-		this(null);
+		this((Javalin) null);
+	}
+
+	public WebsocketServer(Javalin server) {
+		this(server, null);
 	}
 
 	public WebsocketServer(WsExceptionHandler<Exception> exceptionHandler) {
+		this(null, exceptionHandler);
+	}
+
+	public WebsocketServer(Javalin server, WsExceptionHandler<Exception> exceptionHandler) {
 		try {
-			wss = Javalin.create();
-			wss.exception(Exception.class, (e, ctx) -> {
-				log.error("Uncaught exception in Websocket-Server: {}", e);
-			});
+			wss = server;
+			if (wss == null)
+				wss = Javalin.create();
+
 			if (exceptionHandler != null)
 				wss.wsException(Exception.class, exceptionHandler);
+
 			wss.wsException(Exception.class, (e, ctx) -> {
 				log.error("Uncaught websocket-exception in Websocket-Server: {}", e);
 			});
@@ -40,11 +49,20 @@ public class WebsocketServer {
 	}
 
 	public WebsocketServer(String keycloakHost, String keycloakRealm) {
-		this(keycloakHost, keycloakRealm, null);
+		this(null, keycloakHost, keycloakRealm);
+	}
+
+	public WebsocketServer(Javalin server, String keycloakHost, String keycloakRealm) {
+		this(server, keycloakHost, keycloakRealm, null);
 	}
 
 	public WebsocketServer(String keycloakHost, String keycloakRealm, WsExceptionHandler<Exception> exceptionHandler) {
-		this(exceptionHandler);
+		this(null, keycloakHost, keycloakRealm, exceptionHandler);
+	}
+
+	public WebsocketServer(Javalin server, String keycloakHost, String keycloakRealm,
+			WsExceptionHandler<Exception> exceptionHandler) {
+		this(server, exceptionHandler);
 		if (keycloakHost == null || keycloakHost.isEmpty()) {
 			throw new IllegalArgumentException("Keycloak host must not be null or empty.");
 		}
@@ -64,6 +82,14 @@ public class WebsocketServer {
 		}
 	}
 
+	/**
+	 * Starts the Websocket server on the specified port. Don't start this, if you
+	 * used this class as a decorator for an existing Javalin instance. Call the
+	 * other start method instead.
+	 *
+	 * @param port the port to listen to
+	 * @return
+	 */
 	public WebsocketServer start(int port) {
 		wss.start("0.0.0.0", port);
 		log.debug("Websocket server started on port: {}", port);
