@@ -74,7 +74,10 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	}
 
 	@Override
-	public void onMessage(WsMessageContext ctx) throws Exception {
+	public void onMsg(WsMessageContext ctx) throws Exception {
+	}
+
+	public final void onMessage(WsMessageContext ctx) throws Exception {
 		log.debug("Received from [{}]: [{}]", ctx.session.getRemoteAddress(), ctx.message());
 		if (isQuarantined(ctx.session)) {
 			log.warn("Client [{}] is quarantined, checking message for standard authorization-bearer-token.",
@@ -93,12 +96,14 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 						ctx.session.getRemoteAddress());
 				clientsQuarantined.removeIf(c -> c.session.equals(ctx.session));
 				clientsConnected.add(client);
+				return;
 			} catch (Exception e) {
 				log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
 				ctx.session.close(1000, "Unauthorized access with invalid token");
 				return;
 			}
 		}
+		onMsg(ctx);
 	}
 
 	@Override

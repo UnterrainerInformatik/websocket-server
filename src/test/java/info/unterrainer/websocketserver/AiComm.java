@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AiComm extends WsOauthHandlerBase {
 
 	@Override
-	public void onMessage(WsMessageContext ctx) throws Exception {
+	public void onMsg(WsMessageContext ctx) throws Exception {
 		super.onMessage(ctx);
 
 		// Broadcast to all connected WS clients.
