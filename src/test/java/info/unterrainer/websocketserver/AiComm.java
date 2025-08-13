@@ -9,7 +9,7 @@ public class AiComm extends WsOauthHandlerBase {
 
 	@Override
 	public void onMsg(WsMessageContext ctx) throws Exception {
-		super.onMessage(ctx);
+		super.onMsg(ctx);
 
 		// Broadcast to all connected WS clients.
 		for (WsConnectContext client : clientsConnected) {

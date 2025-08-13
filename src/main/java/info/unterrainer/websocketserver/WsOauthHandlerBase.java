@@ -2,11 +2,17 @@ package info.unterrainer.websocketserver;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.websocket.api.Session;
 
+import info.unterrainer.commons.jreutils.ShutdownHook;
 import info.unterrainer.oauthtokenmanager.OauthTokenManager;
 import io.javalin.websocket.WsBinaryMessageContext;
 import io.javalin.websocket.WsCloseContext;
@@ -21,6 +27,37 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	protected OauthTokenManager tokenHandler;
 	protected Set<WsConnectContext> clientsConnected = ConcurrentHashMap.newKeySet();
 	protected Set<WsConnectContext> clientsQuarantined = ConcurrentHashMap.newKeySet();
+	protected HashMap<Session, String> tenantIdsBySession = new HashMap<>();
+
+	protected ScheduledExecutorService hb = Executors.newSingleThreadScheduledExecutor(r -> {
+		Thread t = new Thread(r, "ws-heartbeat");
+		t.setDaemon(true);
+		return t;
+	});
+
+	public WsOauthHandlerBase() {
+		super();
+		ShutdownHook.register(() -> {
+			hb.close();
+			hb = null;
+		});
+
+		hb.scheduleAtFixedRate(() -> {
+			for (WsConnectContext c : clientsConnected) {
+				Session s = c.session;
+				if (s.isOpen()) {
+					try {
+						s.getRemote().sendPing(ByteBuffer.allocate(1));
+					} catch (Exception e) {
+						try {
+							s.close(1000, "heartbeat failed");
+						} catch (Exception ignore) {
+						}
+					}
+				}
+			}
+		}, 30, 30, TimeUnit.SECONDS);
+	}
 
 	void setTokenHandler(OauthTokenManager tokenHandler) {
 		this.tokenHandler = tokenHandler;
@@ -64,7 +101,8 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 		}
 		log.debug("New client token: [{}]", token);
 		try {
-			tokenHandler.checkAccess(token);
+			String tenantId = tokenHandler.checkAccess(token);
+			tenantIdsBySession.put(ctx.session, tenantId);
 			clientsConnected.add(ctx);
 		} catch (Exception e) {
 			log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
@@ -90,7 +128,8 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 				return;
 			}
 			try {
-				tokenHandler.checkAccess(ctx.message());
+				String tenantId = tokenHandler.checkAccess(ctx.message());
+				tenantIdsBySession.put(ctx.session, tenantId);
 				WsConnectContext client = getQuarantinedClient(ctx.session);
 				log.debug("Client [{}] passed token validation. Moving from quarantine to connected.",
 						ctx.session.getRemoteAddress());
