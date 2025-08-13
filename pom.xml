@@ -10,7 +10,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>websocket-server</artifactId>
-	<version>1.0.13</version>
+	<version>1.0.14</version>
 	<name>WebsocketServer</name>
 	<packaging>jar</packaging>
 	
@@ -29,6 +29,11 @@
 			<artifactId>websocket-api</artifactId>
 			<version>9.4.38.v20210224</version>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>info.unterrainer.commons</groupId>
+			<artifactId>jre-utils:jar</artifactId>
+			<version>1.0.1</version>
 		</dependency>
 		<dependency>
 			<groupId>info.unterrainer.commons</groupId>
