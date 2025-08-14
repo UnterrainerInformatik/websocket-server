@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WebsocketServer {
 
+	private String name;
 	private String keycloakHost;
 	private String realm;
 	private OauthTokenManager tokenManager;
@@ -20,18 +21,35 @@ public class WebsocketServer {
 	private boolean isOauthEnabled = false;
 
 	public WebsocketServer() {
-		this((Javalin) null);
+		this("", (Javalin) null);
+	}
+
+	public WebsocketServer(String name) {
+		this(name, (Javalin) null);
 	}
 
 	public WebsocketServer(Javalin server) {
-		this(server, null);
+		this("", server);
+	}
+
+	public WebsocketServer(String name, Javalin server) {
+		this(name, server, null);
 	}
 
 	public WebsocketServer(WsExceptionHandler<Exception> exceptionHandler) {
-		this(null, exceptionHandler);
+		this("", (Javalin) null, exceptionHandler);
+	}
+
+	public WebsocketServer(String name, WsExceptionHandler<Exception> exceptionHandler) {
+		this(name, (Javalin) null, exceptionHandler);
 	}
 
 	public WebsocketServer(Javalin server, WsExceptionHandler<Exception> exceptionHandler) {
+		this("", server, exceptionHandler);
+	}
+
+	public WebsocketServer(String name, Javalin server, WsExceptionHandler<Exception> exceptionHandler) {
+		this.name = name;
 		try {
 			wss = server;
 			if (wss == null)
@@ -41,33 +59,51 @@ public class WebsocketServer {
 				wss.wsException(Exception.class, exceptionHandler);
 
 			wss.wsException(Exception.class, (e, ctx) -> {
-				log.error("Uncaught websocket-exception in Websocket-Server: {}", e);
+				log.error("(" + name + ") Uncaught websocket-exception in Websocket-Server: {}", e);
 			});
 		} catch (Exception e) {
-			log.error("Error initializing Websocket-Server.", e);
+			log.error("(" + name + ") Error initializing Websocket-Server.", e);
 		}
 	}
 
 	public WebsocketServer(String keycloakHost, String keycloakRealm) {
-		this(null, keycloakHost, keycloakRealm);
+		this("", null, keycloakHost, keycloakRealm);
+	}
+
+	public WebsocketServer(String name, String keycloakHost, String keycloakRealm) {
+		this(name, null, keycloakHost, keycloakRealm);
 	}
 
 	public WebsocketServer(Javalin server, String keycloakHost, String keycloakRealm) {
-		this(server, keycloakHost, keycloakRealm, null);
+		this("", server, keycloakHost, keycloakRealm, null);
+	}
+
+	public WebsocketServer(String name, Javalin server, String keycloakHost, String keycloakRealm) {
+		this(name, server, keycloakHost, keycloakRealm, null);
 	}
 
 	public WebsocketServer(String keycloakHost, String keycloakRealm, WsExceptionHandler<Exception> exceptionHandler) {
-		this(null, keycloakHost, keycloakRealm, exceptionHandler);
+		this("", null, keycloakHost, keycloakRealm, exceptionHandler);
+	}
+
+	public WebsocketServer(String name, String keycloakHost, String keycloakRealm,
+			WsExceptionHandler<Exception> exceptionHandler) {
+		this(name, null, keycloakHost, keycloakRealm, exceptionHandler);
 	}
 
 	public WebsocketServer(Javalin server, String keycloakHost, String keycloakRealm,
 			WsExceptionHandler<Exception> exceptionHandler) {
-		this(server, exceptionHandler);
+		this("", server, keycloakHost, keycloakRealm, exceptionHandler);
+	}
+
+	public WebsocketServer(String name, Javalin server, String keycloakHost, String keycloakRealm,
+			WsExceptionHandler<Exception> exceptionHandler) {
+		this(name, server, exceptionHandler);
 		if (keycloakHost == null || keycloakHost.isEmpty()) {
-			throw new IllegalArgumentException("Keycloak host must not be null or empty.");
+			throw new IllegalArgumentException("(" + name + ") Keycloak host must not be null or empty.");
 		}
 		if (keycloakRealm == null || keycloakRealm.isEmpty()) {
-			throw new IllegalArgumentException("Keycloak realm must not be null or empty.");
+			throw new IllegalArgumentException("(" + name + ") Keycloak realm must not be null or empty.");
 		}
 		this.keycloakHost = keycloakHost;
 		this.realm = keycloakRealm;
@@ -77,7 +113,7 @@ public class WebsocketServer {
 			tokenManager.initPublicKey();
 			isOauthEnabled = true;
 		} catch (Exception e) {
-			log.error("Error initializing OauthTokenManager.", e);
+			log.error("(" + name + ") Error initializing OauthTokenManager.", e);
 			return;
 		}
 	}
@@ -92,7 +128,7 @@ public class WebsocketServer {
 	 */
 	public WebsocketServer start(int port) {
 		wss.start("0.0.0.0", port);
-		log.debug("Websocket server started on port: {}", port);
+		log.debug("(" + name + ") Websocket server started on port: {}", port);
 		return this;
 	}
 
@@ -103,7 +139,8 @@ public class WebsocketServer {
 
 	public WebsocketServer wsOauth(String path, WsOauthHandlerBase handler) {
 		if (!isOauthEnabled) {
-			throw new IllegalStateException("Websocket server is not configured for OAuth2/JWT support.");
+			throw new IllegalStateException(
+					"(" + name + ") Websocket server is not configured for OAuth2/JWT support.");
 		}
 
 		handler.setTokenHandler(tokenManager);

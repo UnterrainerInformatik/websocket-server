@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WsOauthHandlerBase extends WsHandlerBase {
 
+	protected String name;
 	protected OauthTokenManager tokenHandler;
 	protected Set<WsConnectContext> clientsConnected = ConcurrentHashMap.newKeySet();
 	protected Set<WsConnectContext> clientsQuarantined = ConcurrentHashMap.newKeySet();
@@ -35,8 +36,9 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 		return t;
 	});
 
-	public WsOauthHandlerBase() {
+	public WsOauthHandlerBase(String name) {
 		super();
+		this.name = name;
 		ShutdownHook.register(() -> {
 			hb.close();
 			hb = null;
@@ -50,7 +52,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 						s.getRemote().sendPing(ByteBuffer.allocate(1));
 					} catch (Exception e) {
 						try {
-							s.close(1000, "heartbeat failed");
+							s.close(1000, "(" + name + ") heartbeat failed");
 						} catch (Exception ignore) {
 						}
 					}
@@ -64,49 +66,50 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	}
 
 	public void removeClient(Session session) {
-		log.debug("Removing client: [{}]", session.getRemoteAddress());
+		log.debug("(" + name + ") Removing client: [{}]", session.getRemoteAddress());
 		clientsConnected.removeIf(client -> client.session.equals(session));
 		clientsQuarantined.removeIf(client -> client.session.equals(session));
 	}
 
 	public WsConnectContext getClient(Session session) {
-		log.debug("Getting client: [{}]", session.getRemoteAddress());
+		log.debug("(" + name + ") Getting client: [{}]", session.getRemoteAddress());
 		return clientsConnected.stream().filter(client -> client.session.equals(session)).findFirst().orElse(null);
 	}
 
 	public WsConnectContext getQuarantinedClient(Session session) {
-		log.debug("Getting quarantined client: [{}]", session.getRemoteAddress());
+		log.debug("(" + name + ") Getting quarantined client: [{}]", session.getRemoteAddress());
 		return clientsQuarantined.stream().filter(client -> client.session.equals(session)).findFirst().orElse(null);
 	}
 
 	public boolean isQuarantined(Session session) {
-		log.debug("Checking if client is quarantined: [{}]", session.getRemoteAddress());
+		log.debug("(" + name + ") Checking if client is quarantined: [{}]", session.getRemoteAddress());
 		return clientsQuarantined.stream().anyMatch(client -> client.session.equals(session));
 	}
 
 	public boolean isConnected(Session session) {
-		log.debug("Checking if client is connected: [{}]", session.getRemoteAddress());
+		log.debug("(" + name + ") Checking if client is connected: [{}]", session.getRemoteAddress());
 		return clientsConnected.stream().anyMatch(client -> client.session.equals(session));
 	}
 
 	@Override
 	public void onConnect(WsConnectContext ctx) throws Exception {
-		log.debug("New client tries to connect: [{}]", ctx.session.getRemoteAddress());
+		log.debug("(" + name + ") New client tries to connect: [{}]", ctx.session.getRemoteAddress());
 		String token = ctx.header("Authorization");
 		if (token == null || token.isEmpty()) {
-			log.warn("No token provided for client: [{}]\nSending connection into quarantine.",
+			log.warn("(" + name + ") No token provided for client: [{}]\nSending connection into quarantine.",
 					ctx.session.getRemoteAddress());
 			clientsQuarantined.add(ctx);
 			return;
 		}
-		log.debug("New client token: [{}]", token);
+		log.debug("(" + name + ") New client token: [{}]", token);
 		try {
 			String tenantId = tokenHandler.checkAccess(token);
 			tenantIdsBySession.put(ctx.session, tenantId);
 			clientsConnected.add(ctx);
 		} catch (Exception e) {
-			log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
-			ctx.session.close(1000, "Unauthorized access with invalid token");
+			log.debug("(" + name + ") Token validation failed for client [{}]. Disconnecting.",
+					ctx.session.getRemoteAddress(), e);
+			ctx.session.close(1000, "(" + name + ") Unauthorized access with invalid token");
 			return;
 		}
 	}
@@ -116,29 +119,32 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	}
 
 	public final void onMessage(WsMessageContext ctx) throws Exception {
-		log.debug("Received from [{}]: [{}]", ctx.session.getRemoteAddress(), ctx.message());
+		log.debug("(" + name + ") Received from [{}]: [{}]", ctx.session.getRemoteAddress(), ctx.message());
 		if (isQuarantined(ctx.session)) {
-			log.warn("Client [{}] is quarantined, checking message for standard authorization-bearer-token.",
+			log.warn(
+					"(" + name
+							+ ") Client [{}] is quarantined, checking message for standard authorization-bearer-token.",
 					ctx.session.getRemoteAddress());
 			if (ctx.message() == null || !ctx.message().startsWith("Bearer ")) {
-				log.warn("Invalid message from quarantined client [{}]. Disconnecting.",
+				log.warn("(" + name + ") Invalid message from quarantined client [{}]. Disconnecting.",
 						ctx.session.getRemoteAddress());
 				removeClient(ctx.session);
-				ctx.session.close(1000, "Unauthorized access from quarantined client");
+				ctx.session.close(1000, "(" + name + ") Unauthorized access from quarantined client");
 				return;
 			}
 			try {
 				String tenantId = tokenHandler.checkAccess(ctx.message());
 				tenantIdsBySession.put(ctx.session, tenantId);
 				WsConnectContext client = getQuarantinedClient(ctx.session);
-				log.debug("Client [{}] passed token validation. Moving from quarantine to connected.",
+				log.debug("(" + name + ") Client [{}] passed token validation. Moving from quarantine to connected.",
 						ctx.session.getRemoteAddress());
 				clientsQuarantined.removeIf(c -> c.session.equals(ctx.session));
 				clientsConnected.add(client);
 				return;
 			} catch (Exception e) {
-				log.debug("Token validation failed for client [{}]. Disconnecting.", ctx.session.getRemoteAddress(), e);
-				ctx.session.close(1000, "Unauthorized access with invalid token");
+				log.debug("(" + name + ") Token validation failed for client [{}]. Disconnecting.",
+						ctx.session.getRemoteAddress(), e);
+				ctx.session.close(1000, "(" + name + ") Unauthorized access with invalid token");
 				return;
 			}
 		}
@@ -147,18 +153,20 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 
 	@Override
 	public void onBinaryMessage(WsBinaryMessageContext ctx) throws Exception {
-		log.debug("Received binary message from [{}]: [{}] bytes", ctx.session.getRemoteAddress(), ctx.data().length);
+		log.debug("(" + name + ") Received binary message from [{}]: [{}] bytes", ctx.session.getRemoteAddress(),
+				ctx.data().length);
 		if (isQuarantined(ctx.session)) {
-			log.warn("Invalid Message from quarantined client [{}]. Disconnecting.", ctx.session.getRemoteAddress());
+			log.warn("(" + name + ") Invalid Message from quarantined client [{}]. Disconnecting.",
+					ctx.session.getRemoteAddress());
 			removeClient(ctx.session);
-			ctx.session.close(1000, "Unauthorized access from quarantined client");
+			ctx.session.close(1000, "(" + name + ") Unauthorized access from quarantined client");
 			return;
 		}
 	}
 
 	@Override
 	public void onClose(WsCloseContext ctx) throws Exception {
-		log.debug("Disconnected client: [{}]", ctx.session.getRemoteAddress());
+		log.debug("(" + name + ") Disconnected client: [{}]", ctx.session.getRemoteAddress());
 		removeClient(ctx.session);
 	}
 
@@ -166,9 +174,9 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	public void onError(WsErrorContext ctx) throws Exception {
 		Throwable t = ctx.error();
 		if (t instanceof EOFException || t instanceof IOException) {
-			log.debug("Client disconnected [{}].", ctx.session.getRemoteAddress());
+			log.debug("(" + name + ") Client disconnected [{}].", ctx.session.getRemoteAddress());
 		} else {
-			log.error("Unexpected error on [{}].", ctx.session.getRemoteAddress(), t);
+			log.error("(" + name + ") Unexpected error on [{}].", ctx.session.getRemoteAddress(), t);
 		}
 		removeClient(ctx.session);
 	}
