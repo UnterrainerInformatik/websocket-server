@@ -110,7 +110,7 @@ public class WebsocketServer {
 
 		try {
 			tokenManager = new OauthTokenManager(this.keycloakHost, this.realm);
-			tokenManager.initPublicKey();
+			tokenManager.initPublicKeys();
 			isOauthEnabled = true;
 		} catch (Exception e) {
 			log.error("(" + name + ") Error initializing OauthTokenManager.", e);
