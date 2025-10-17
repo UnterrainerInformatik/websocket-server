@@ -6,7 +6,7 @@ public class WebSocketServerTest {
 		WebsocketServer server = new WebsocketServer("https://keycloak.lan.elite-zettl.at", "Cms");
 		AiComm aiComm;
 
-		aiComm = new AiComm();
+		aiComm = new AiComm("ai-comm-test");
 
 		server.wsOauth("/jwt", aiComm);
 		server.ws("/ws", ws -> {

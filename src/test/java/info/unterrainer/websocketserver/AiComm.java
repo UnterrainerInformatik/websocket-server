@@ -7,6 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AiComm extends WsOauthHandlerBase {
 
+	public AiComm(String name) {
+		super(name);
+	}
+
 	@Override
 	public void onMsg(WsMessageContext ctx) throws Exception {
 		super.onMsg(ctx);

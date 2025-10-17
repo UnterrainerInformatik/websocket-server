@@ -136,12 +136,12 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 				String tenantId = tokenHandler.checkAccess(ctx.message());
 				tenantIdsBySession.put(ctx.session, tenantId);
 				WsConnectContext client = getQuarantinedClient(ctx.session);
-				log.debug("(" + name + ") Client [{}] passed token validation. Moving from quarantine to connected.",
-						ctx.session.getRemoteAddress());
 				clientsQuarantined.removeIf(c -> c.session.equals(ctx.session));
 				clientsConnected.add(client);
+				log.debug("(" + name + ") Client [{}] passed token validation. Moving from quarantine to connected.",
+						ctx.session.getRemoteAddress());
 				return;
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				log.debug("(" + name + ") Token validation failed for client [{}]. Disconnecting.",
 						ctx.session.getRemoteAddress(), e);
 				ctx.session.close(1000, "(" + name + ") Unauthorized access with invalid token");
