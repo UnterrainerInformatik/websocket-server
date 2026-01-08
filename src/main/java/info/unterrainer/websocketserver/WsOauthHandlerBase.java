@@ -152,6 +152,9 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	}
 
 	@Override
+	public void onBinaryMsg(WsBinaryMessageContext ctx) throws Exception {
+	}
+	
 	public void onBinaryMessage(WsBinaryMessageContext ctx) throws Exception {
 		log.debug("(" + name + ") Received binary message from [{}]: [{}] bytes", ctx.session.getRemoteAddress(),
 				ctx.data().length);
@@ -162,6 +165,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 			ctx.session.close(1000, "(" + name + ") Unauthorized access from quarantined client");
 			return;
 		}
+		onBinaryMsg(ctx);
 	}
 
 	@Override

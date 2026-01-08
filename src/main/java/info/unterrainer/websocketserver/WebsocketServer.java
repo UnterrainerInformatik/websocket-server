@@ -131,6 +131,12 @@ public class WebsocketServer {
 		log.debug("(" + name + ") Websocket server started on port: {}", port);
 		return this;
 	}
+	
+	public WebsocketServer stop() {
+		wss.stop();
+		log.debug("(" + name + ") Websocket server stopped.");
+		return this;
+	}
 
 	public WebsocketServer ws(String path, Consumer<WsHandler> ws) {
 		wss.ws(path, ws, new HashSet<>());
@@ -147,7 +153,7 @@ public class WebsocketServer {
 		wss.ws(path, ws -> {
 			ws.onConnect(handler::onConnect);
 			ws.onMessage(handler::onMessage);
-			ws.onBinaryMessage(handler::onBinaryMessage);
+			ws.onBinaryMessage(handler::onBinaryMsg);
 			ws.onClose(handler::onClose);
 			ws.onError(handler::onError);
 		});
