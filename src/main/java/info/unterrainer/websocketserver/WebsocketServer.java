@@ -48,6 +48,9 @@ public class WebsocketServer {
 		this("", server, exceptionHandler);
 	}
 
+	/// There is no exception-handler-chain in Javalin, so we have to do it ourselves.
+	/// This means, if you provide your own exception handler, it will be called first,
+	/// then the default one will be called, which just logs the exception.
 	public WebsocketServer(String name, Javalin server, WsExceptionHandler<Exception> exceptionHandler) {
 		this.name = name;
 		try {
@@ -55,11 +58,11 @@ public class WebsocketServer {
 			if (wss == null)
 				wss = Javalin.create();
 
-			if (exceptionHandler != null)
-				wss.wsException(Exception.class, exceptionHandler);
-
 			wss.wsException(Exception.class, (e, ctx) -> {
 				log.error("(" + name + ") Uncaught websocket-exception in Websocket-Server: {}", e);
+				if (exceptionHandler != null) {
+			        exceptionHandler.handle(e, ctx);
+			    }
 			});
 		} catch (Exception e) {
 			log.error("(" + name + ") Error initializing Websocket-Server.", e);

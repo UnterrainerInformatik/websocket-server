@@ -3,6 +3,8 @@ package info.unterrainer.websocketserver;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -288,7 +290,8 @@ class WebsocketServerTest {
 
 		server.ws("/binary", ws -> {
 			ws.onBinaryMessage(ctx -> {
-				ctx.send(ctx.data());
+				byte[] copy = Arrays.copyOf(ctx.data(), ctx.data().length);
+				ctx.send(ByteBuffer.wrap(copy));
 			});
 		}).start(testPort);
 
@@ -300,7 +303,7 @@ class WebsocketServerTest {
 		};
 
 		Session session = client.connect(handler, new URI(wsUrl + "/binary")).get(5, TimeUnit.SECONDS);
-		session.getRemote().sendBytes(java.nio.ByteBuffer.wrap(testData));
+		session.getRemote().sendBytes(java.nio.ByteBuffer.wrap(Arrays.copyOf(testData, testData.length)));
 
 		assertThat(messageLatch.await(5, TimeUnit.SECONDS)).isTrue();
 		assertThat(receivedData.get()).isEqualTo(testData);
@@ -362,6 +365,7 @@ class WebsocketServerTest {
 		}).start(testPort);
 
 		client.start();
+
 		TestWebSocketHandler handler = new TestWebSocketHandler();
 		Session session = client.connect(handler, new URI(wsUrl + "/custom-error")).get(5, TimeUnit.SECONDS);
 
@@ -448,6 +452,7 @@ class WebsocketServerTest {
 		public volatile Session session;
 		public volatile CountDownLatch connectLatch = new CountDownLatch(1);
 		public volatile CountDownLatch closeLatch = new CountDownLatch(1);
+		public volatile CountDownLatch errorLatch = new CountDownLatch(1);
 		public volatile java.util.function.Consumer<String> onMessageReceived;
 		public volatile java.util.function.Consumer<byte[]> onBinaryMessageReceived;
 		public volatile java.util.function.BiConsumer<Session, Throwable> onError;
@@ -469,12 +474,12 @@ class WebsocketServerTest {
 		@OnWebSocketMessage
 		public void onBinaryMessage(Session session, byte[] data, int offset, int length) {
 			if (onBinaryMessageReceived != null) {
-				byte[] actualData = new byte[length];
-				System.arraycopy(data, offset, actualData, 0, length);
-				onBinaryMessageReceived.accept(actualData);
+				byte[] actual = new byte[length];
+				System.arraycopy(data, offset, actual, 0, length);
+				onBinaryMessageReceived.accept(actual);
 			}
 		}
-
+		
 		@OnWebSocketClose
 		public void onClose(int statusCode, String reason) {
 			closeLatch.countDown();
@@ -485,6 +490,7 @@ class WebsocketServerTest {
 
 		@OnWebSocketError
 		public void onError(Throwable error) {
+			errorLatch.countDown();
 			if (onError != null) {
 				onError.accept(session, error);
 			}
