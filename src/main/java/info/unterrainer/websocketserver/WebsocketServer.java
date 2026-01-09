@@ -155,7 +155,7 @@ public class WebsocketServer {
 		handler.setTokenHandler(tokenManager);
 		wss.ws(path, ws -> {
 			ws.onConnect(handler::onConnect);
-			ws.onMessage(handler::onMessage);
+			ws.onMessage(handler::onMsg);
 			ws.onBinaryMessage(handler::onBinaryMsg);
 			ws.onClose(handler::onClose);
 			ws.onError(handler::onError);

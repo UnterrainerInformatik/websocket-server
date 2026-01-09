@@ -31,6 +31,12 @@ class WsHandlerBaseTest {
 	
 	@BeforeEach
 	void setUp() {
+		// Initialize mocks explicitly to avoid relying on Mockito annotations processing
+		connectContext = mock(WsConnectContext.class);
+		messageContext = mock(WsMessageContext.class);
+		binaryMessageContext = mock(WsBinaryMessageContext.class);
+		closeContext = mock(WsCloseContext.class);
+		errorContext = mock(WsErrorContext.class);
 		handler = new TestWsHandler();
 	}
 

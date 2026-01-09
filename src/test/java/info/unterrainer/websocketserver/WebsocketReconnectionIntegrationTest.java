@@ -97,6 +97,7 @@ class WebsocketReconnectionIntegrationTest {
 		assertThat(connectionIds).hasSize(2);
 
 		session2.close();
+		server.stop();
 	}
 
 	@Test
@@ -145,6 +146,7 @@ class WebsocketReconnectionIntegrationTest {
 		assertThat(session2.isOpen()).isTrue();
 
 		session2.close();
+		server.stop();
 	}
 
 	@Test
@@ -152,7 +154,6 @@ class WebsocketReconnectionIntegrationTest {
 		server = new WebsocketServer("message-loss-server");
 		CountDownLatch firstConnect = new CountDownLatch(1);
 		CountDownLatch secondConnect = new CountDownLatch(1);
-		AtomicInteger messageCounter = new AtomicInteger(0);
 		List<Integer> receivedMessages = new ArrayList<>();
 
 		server.ws("/message-loss", ws -> {
@@ -211,6 +212,7 @@ class WebsocketReconnectionIntegrationTest {
 		assertThat(receivedMessages).containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
 		session2.close();
+		server.stop();
 	}
 
 	@Test
@@ -250,6 +252,7 @@ class WebsocketReconnectionIntegrationTest {
 
 		assertThat(connectionCount.get()).isEqualTo(attempts);
 		assertThat(disconnectionCount.get()).isEqualTo(attempts);
+		server.stop();
 	}
 
 	@Test
@@ -297,6 +300,7 @@ class WebsocketReconnectionIntegrationTest {
 
 		session2.close();
 		client2.stop();
+		server.stop();
 	}
 
 	@Test
@@ -366,6 +370,7 @@ class WebsocketReconnectionIntegrationTest {
 		assertThat(firstSessionId.get()).isNotEqualTo(secondSessionId.get());
 
 		session2.close();
+		server.stop();
 	}
 
 	@Test
@@ -399,6 +404,7 @@ class WebsocketReconnectionIntegrationTest {
 
 		// Handler should detect the closure
 		assertThat(handler.closeLatch.await(5, TimeUnit.SECONDS)).isTrue();
+		server.stop();
 	}
 
 	@WebSocket
