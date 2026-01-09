@@ -1,6 +1,6 @@
 package info.unterrainer.websocketserver;
 
-public class WebSocketServerTest {
+public class WebSocketServerManualTest {
 
 	public static void main(String[] args) {
 		WebsocketServer server = new WebsocketServer("https://keycloak.lan.elite-zettl.at", "Cms");

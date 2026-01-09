@@ -69,6 +69,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 		log.debug("(" + name + ") Removing client: [{}]", session.getRemoteAddress());
 		clientsConnected.removeIf(client -> client.session.equals(session));
 		clientsQuarantined.removeIf(client -> client.session.equals(session));
+		tenantIdsBySession.remove(session);
 	}
 
 	public WsConnectContext getClient(Session session) {
@@ -93,6 +94,10 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 
 	@Override
 	public void onConnect(WsConnectContext ctx) throws Exception {
+		handleConnect(ctx);
+	}
+	
+	protected void handleConnect(WsConnectContext ctx) throws Exception {
 		log.debug("(" + name + ") New client tries to connect: [{}]", ctx.session.getRemoteAddress());
 		String token = ctx.header("Authorization");
 		if (token == null || token.isEmpty()) {
@@ -116,9 +121,10 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 
 	@Override
 	public void onMsg(WsMessageContext ctx) throws Exception {
+		handleMessage(ctx);
 	}
 
-	public final void onMessage(WsMessageContext ctx) throws Exception {
+	protected void handleMessage(WsMessageContext ctx) throws Exception {
 		log.debug("(" + name + ") Received from [{}]: [{}]", ctx.session.getRemoteAddress(), ctx.message());
 		if (isQuarantined(ctx.session)) {
 			log.warn(
@@ -152,7 +158,11 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	}
 
 	@Override
-	public void onBinaryMessage(WsBinaryMessageContext ctx) throws Exception {
+	public void onBinaryMsg(WsBinaryMessageContext ctx) throws Exception {
+		handleBinaryMessage(ctx);
+	}
+	
+	protected void handleBinaryMessage(WsBinaryMessageContext ctx) throws Exception {
 		log.debug("(" + name + ") Received binary message from [{}]: [{}] bytes", ctx.session.getRemoteAddress(),
 				ctx.data().length);
 		if (isQuarantined(ctx.session)) {
@@ -162,16 +172,25 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 			ctx.session.close(1000, "(" + name + ") Unauthorized access from quarantined client");
 			return;
 		}
+		onBinaryMsg(ctx);
 	}
 
 	@Override
 	public void onClose(WsCloseContext ctx) throws Exception {
+		handleClose(ctx);
+	}
+	
+	protected void handleClose(WsCloseContext ctx) throws Exception {
 		log.debug("(" + name + ") Disconnected client: [{}]", ctx.session.getRemoteAddress());
 		removeClient(ctx.session);
 	}
 
 	@Override
 	public void onError(WsErrorContext ctx) throws Exception {
+		handleError(ctx);
+	}
+	
+	protected void handleError(WsErrorContext ctx) throws Exception {
 		Throwable t = ctx.error();
 		if (t instanceof EOFException || t instanceof IOException) {
 			log.debug("(" + name + ") Client disconnected [{}].", ctx.session.getRemoteAddress());

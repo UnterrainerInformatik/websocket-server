@@ -12,7 +12,7 @@ public abstract class WsHandlerBase {
 
 	public abstract void onMsg(WsMessageContext ctx) throws Exception;
 
-	public abstract void onBinaryMessage(WsBinaryMessageContext ctx) throws Exception;
+	public abstract void onBinaryMsg(WsBinaryMessageContext ctx) throws Exception;
 
 	public abstract void onClose(WsCloseContext ctx) throws Exception;
 
