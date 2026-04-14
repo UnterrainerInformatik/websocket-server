@@ -61,7 +61,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 		}, 30, 30, TimeUnit.SECONDS);
 	}
 
-	void setTokenHandler(OauthTokenManager tokenHandler) {
+	public void setTokenHandler(OauthTokenManager tokenHandler) {
 		this.tokenHandler = tokenHandler;
 	}
 
@@ -96,7 +96,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	public void onConnect(WsConnectContext ctx) throws Exception {
 		handleConnect(ctx);
 	}
-	
+
 	protected void handleConnect(WsConnectContext ctx) throws Exception {
 		log.debug("(" + name + ") New client tries to connect: [{}]", ctx.session.getRemoteAddress());
 		String token = ctx.header("Authorization");
@@ -161,7 +161,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	public void onBinaryMsg(WsBinaryMessageContext ctx) throws Exception {
 		handleBinaryMessage(ctx);
 	}
-	
+
 	protected void handleBinaryMessage(WsBinaryMessageContext ctx) throws Exception {
 		log.debug("(" + name + ") Received binary message from [{}]: [{}] bytes", ctx.session.getRemoteAddress(),
 				ctx.data().length);
@@ -179,7 +179,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	public void onClose(WsCloseContext ctx) throws Exception {
 		handleClose(ctx);
 	}
-	
+
 	protected void handleClose(WsCloseContext ctx) throws Exception {
 		log.debug("(" + name + ") Disconnected client: [{}]", ctx.session.getRemoteAddress());
 		removeClient(ctx.session);
@@ -189,7 +189,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 	public void onError(WsErrorContext ctx) throws Exception {
 		handleError(ctx);
 	}
-	
+
 	protected void handleError(WsErrorContext ctx) throws Exception {
 		Throwable t = ctx.error();
 		if (t instanceof EOFException || t instanceof IOException) {
