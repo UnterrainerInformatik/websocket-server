@@ -148,7 +148,7 @@ public class WsOauthHandlerBase extends WsHandlerBase {
 						ctx.session.getRemoteAddress());
 				return;
 			} catch (Throwable e) {
-				log.debug("(" + name + ") Token validation failed for client [{}]. Disconnecting.",
+				log.warn("(" + name + ") Token validation failed for client [{}]. Disconnecting.",
 						ctx.session.getRemoteAddress(), e);
 				ctx.session.close(1000, "(" + name + ") Unauthorized access with invalid token");
 				return;
